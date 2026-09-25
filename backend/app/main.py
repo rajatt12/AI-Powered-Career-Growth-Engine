@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .config import settings
 from .api.routes.resume import router as resume_router
 from .api.routes.roles import router as roles_router
+from .api.routes.projects import router as projects_router
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -11,9 +12,10 @@ app = FastAPI(
     ## 🚀 AI Career Architect & Growth Engine
     Transforms raw resumes into structured insights, role matches, skill gap analyses, and actionable learning roadmaps.
     
-    ### Core Capabilities:
+    ### Capabilities:
     * **Phase 1: Resume Ingestion & Parsing:** PDF & DOCX text extraction with structured Pydantic schema via Google Gemini.
     * **Phase 2: Role Matching & Embeddings:** ChromaDB vector search + hybrid skill overlap scoring across curated tech role archetypes.
+    * **Phase 3: Portfolio Project Recommender:** Content-based recommendation engine suggesting production-grade architectures with Mermaid diagrams and XYZ resume bullet points to eliminate skill gaps.
     """
 )
 
@@ -29,6 +31,7 @@ app.add_middleware(
 # Mount API routers
 app.include_router(resume_router)
 app.include_router(roles_router)
+app.include_router(projects_router)
 
 @app.get("/api/health", tags=["System"])
 def health_check():
