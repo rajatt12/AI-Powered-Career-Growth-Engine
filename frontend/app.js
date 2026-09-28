@@ -724,7 +724,9 @@ window.viewRoleProjects = function(roleId) {
   switchTab("projectsTab");
   fetchRecommendedProjects(currentProfile, roleId);
 };
-};
+
+window.filterRoleCategory = filterRoleCategory;
+window.switchTab = switchTab;
 
 // 6. Project Recommender
 async function fetchRecommendedProjects(profile, roleId) {
@@ -960,3 +962,6 @@ function setupRoadmapControls() {
     }
   });
 }
+
+window.switchTab = switchTab;
+window.deleteResumeAndReset = deleteResumeAndReset;
