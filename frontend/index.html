@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CareerForge AI | AI-Powered Career Growth Engine</title>
+  <meta name="description" content="Transform your resume into a personalized career growth roadmap, role match matrix, and production project blueprints.">
+  
+  <!-- Modern Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- Mermaid.js for Architecture Diagrams -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Ambient background glow elements -->
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
+  <div class="ambient-glow glow-3"></div>
+
+  <!-- Header & Navigation -->
+  <header class="navbar glass-card">
+    <div class="nav-container">
+      <div class="brand">
+        <div class="logo-icon">
+          <i data-lucide="sparkles"></i>
+        </div>
+        <div class="brand-text">
+          <span class="brand-title">CareerForge<span class="gradient-text">.AI</span></span>
+          <span class="brand-subtitle">AI-Powered Career Growth Engine</span>
+        </div>
+      </div>
+      
+      <div class="nav-actions">
+        <div class="nav-status">
+          <span class="status-indicator online"></span>
+          <span class="status-text" id="apiStatusText">AI Engine Online</span>
+        </div>
+
+        <!-- Auth Navigation Area -->
+        <div id="authNavLoggedOut">
+          <button class="btn btn-secondary btn-sm" id="openAuthModalBtn">
+            <i data-lucide="user"></i> Sign In / Register
+          </button>
+        </div>
+        <div id="authNavLoggedIn" class="hidden user-menu">
+          <div class="user-pill">
+            <span class="user-initials" id="navUserInitials">U</span>
+            <span class="user-name-text" id="navUserName">User</span>
+          </div>
+          <button class="btn btn-secondary btn-sm" id="logoutBtn" title="Log Out">
+            <i data-lucide="log-out"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Auth Modal (Sign In / Register) -->
+  <div class="modal-backdrop hidden" id="authModal">
+    <div class="glass-card modal-card">
+      <div class="modal-header">
+        <div class="modal-tabs">
+          <button class="modal-tab active" id="tabLoginBtn">Sign In</button>
+          <button class="modal-tab" id="tabRegisterBtn">Create Account</button>
+        </div>
+        <button class="close-modal-btn" id="closeAuthModalBtn">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Login Form -->
+        <form id="loginForm">
+          <div class="input-group">
+            <label><i data-lucide="mail"></i> Email Address</label>
+            <input type="email" id="loginEmail" required placeholder="you@example.com" class="form-input">
+          </div>
+          <div class="input-group">
+            <label><i data-lucide="lock"></i> Password</label>
+            <input type="password" id="loginPassword" required placeholder="••••••••" class="form-input">
+          </div>
+          <button type="submit" class="btn btn-primary btn-full">
+            <i data-lucide="log-in"></i> Sign In & Load My Roadmap
+          </button>
+        </form>
+
+        <!-- Register Form -->
+        <form id="registerForm" class="hidden">
+          <div class="input-group">
+            <label><i data-lucide="user"></i> Full Name</label>
+            <input type="text" id="regName" required placeholder="Rajatveer Singh" class="form-input">
+          </div>
+          <div class="input-group">
+            <label><i data-lucide="mail"></i> Email Address</label>
+            <input type="email" id="regEmail" required placeholder="you@example.com" class="form-input">
+          </div>
+          <div class="input-group">
+            <label><i data-lucide="lock"></i> Password</label>
+            <input type="password" id="regPassword" required placeholder="At least 4 characters" class="form-input">
+          </div>
+          <button type="submit" class="btn btn-primary btn-full">
+            <i data-lucide="user-plus"></i> Create Account & Start
+          </button>
+        </form>
+        <p class="auth-error-msg hidden" id="authErrorMsg"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Container -->
+  <main class="main-content">
+    
+    <!-- Hero Section -->
+    <section class="hero-section" id="heroSection">
+      <div class="hero-badge">
+        <i data-lucide="zap"></i>
+        <span>Don't just analyze your resume. Build your career from it.</span>
+      </div>
+      <h1 class="hero-title">
+        From Raw Skills to <span class="gradient-text">Dream Role</span> Roadmap
+      </h1>
+      <p class="hero-description">
+        Upload your resume to discover matching roles, isolate critical skill gaps, and generate personalized, time-boxed learning roadmaps with production project blueprints.
+      </p>
+    </section>
+
+    <!-- Upload & Ingestion Section -->
+    <section class="upload-section" id="uploadSection">
+      <div class="glass-card upload-card" id="dropZone">
+        <input type="file" id="resumeFileInput" accept=".pdf,.docx,.txt" class="file-input-hidden">
+        
+        <div class="upload-prompt" id="uploadPrompt">
+          <div class="upload-icon-wrapper">
+            <i data-lucide="upload-cloud" class="upload-icon"></i>
+          </div>
+          <h3 class="upload-heading">Drag & Drop Your Resume</h3>
+          <p class="upload-subtext">Supports PDF, DOCX, or TXT documents (up to 10MB)</p>
+          <div class="upload-actions">
+            <button class="btn btn-primary" id="browseBtn">
+              <i data-lucide="file-plus"></i> Browse File
+            </button>
+            <button class="btn btn-secondary" id="sampleResumeBtn">
+              <i data-lucide="play-circle"></i> Try Sample Resume
+            </button>
+          </div>
+        </div>
+
+        <!-- Animated Loading State -->
+        <div class="upload-loading-state hidden" id="uploadLoading">
+          <div class="spinner"></div>
+          <h3 class="loading-title" id="loadingStageText">Parsing Resume with Layout-Aware NLP...</h3>
+          <p class="loading-subtext">Extracting skills, quantified metrics, and synthesizing executive summary</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Results Container -->
+    <div id="resultsDashboard" class="hidden">
+
+      <!-- Candidate Overview Banner with Delete/Reset Option -->
+      <section class="candidate-banner glass-card" id="candidateBanner">
+        <div class="candidate-header-row">
+          <div class="candidate-header-left">
+            <div class="candidate-avatar" id="candidateAvatar">RP</div>
+            <div class="candidate-info">
+              <h2 class="candidate-name" id="candidateName">Candidate Name</h2>
+              <div class="candidate-meta">
+                <span class="badge badge-seniority" id="candidateSeniority">Entry-Level</span>
+                <span class="meta-item" id="candidateEmail"><i data-lucide="mail"></i> email@example.com</span>
+                <span class="meta-item" id="candidateExp"><i data-lucide="briefcase"></i> 2.0 yrs experience</span>
+                <a href="#" class="meta-link hidden" id="candidateGithub" target="_blank"><i data-lucide="github"></i> GitHub</a>
+                <a href="#" class="meta-link hidden" id="candidateLinkedin" target="_blank"><i data-lucide="linkedin"></i> LinkedIn</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Reset / Delete Resume Action -->
+          <div class="candidate-header-right">
+            <button class="btn btn-secondary btn-sm btn-danger-hover" id="resetResumeBtn" title="Delete current resume and upload a new one">
+              <i data-lucide="trash-2"></i> Delete Resume
+            </button>
+          </div>
+        </div>
+        
+        <!-- Clean Executive Summary Box -->
+        <div class="summary-wrapper">
+          <span class="summary-tag"><i data-lucide="sparkles"></i> AI Executive Summary</span>
+          <p class="candidate-summary" id="candidateSummary">Synthesizing executive summary...</p>
+        </div>
+
+        <!-- Skill Pills Grid -->
+        <div class="skills-categorized-grid">
+          <div class="skill-group">
+            <span class="group-label"><i data-lucide="code"></i> Languages</span>
+            <div class="skill-chips" id="languagesChips"></div>
+          </div>
+          <div class="skill-group">
+            <span class="group-label"><i data-lucide="layers"></i> Frameworks</span>
+            <div class="skill-chips" id="frameworksChips"></div>
+          </div>
+          <div class="skill-group">
+            <span class="group-label"><i data-lucide="database"></i> Databases & Vector DBs</span>
+            <div class="skill-chips" id="databasesChips"></div>
+          </div>
+          <div class="skill-group">
+            <span class="group-label"><i data-lucide="cloud"></i> Cloud & DevOps</span>
+            <div class="skill-chips" id="devopsChips"></div>
+          </div>
+          <div class="skill-group">
+            <span class="group-label"><i data-lucide="brain"></i> AI, ML & Data</span>
+            <div class="skill-chips" id="aimlChips"></div>
+          </div>
+          <div class="skill-group">
+            <span class="group-label"><i data-lucide="tool"></i> Tools & Analytics</span>
+            <div class="skill-chips" id="toolsChips"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Step Navigation Tabs -->
+      <div class="dashboard-tabs">
+        <button class="tab-btn active" data-tab="rolesTab">
+          <i data-lucide="compass"></i>
+          <span>1. Matching Roles & Gaps</span>
+        </button>
+        <button class="tab-btn" data-tab="projectsTab">
+          <i data-lucide="folder-git-2"></i>
+          <span>2. Gap-Closing Projects</span>
+        </button>
+        <button class="tab-btn" data-tab="roadmapTab">
+          <i data-lucide="map"></i>
+          <span>3. Personalized Roadmap</span>
+        </button>
+      </div>
+
+      <!-- TAB 1: Roles & Gap Analysis -->
+      <section class="tab-content active" id="rolesTab">
+        <div class="section-intro-row">
+          <div class="section-intro">
+            <h2>Top Matching Career Tracks</h2>
+            <p>Ranked via Vector Semantic Search + Skill Overlap against industry benchmarks.</p>
+          </div>
+          <!-- Category Filters -->
+          <div class="role-filter-pills" id="roleFilterPills">
+            <button class="filter-pill active" onclick="filterRoleCategory('all', this)">All Roles</button>
+            <button class="filter-pill" onclick="filterRoleCategory('ai', this)"><i data-lucide="brain"></i> AI & ML</button>
+            <button class="filter-pill" onclick="filterRoleCategory('data', this)"><i data-lucide="bar-chart-2"></i> Data & Analytics</button>
+            <button class="filter-pill" onclick="filterRoleCategory('software', this)"><i data-lucide="code-2"></i> Software Eng</button>
+          </div>
+        </div>
+        <div class="roles-grid" id="rolesGrid">
+          <!-- Dynamically populated role cards -->
+        </div>
+      </section>
+
+      <!-- TAB 2: Portfolio Projects -->
+      <section class="tab-content" id="projectsTab">
+        <div class="section-intro">
+          <h2>Tailored Capstone Project Blueprints</h2>
+          <p>Multi-skill production architectures engineered to eliminate your missing skill gaps.</p>
+        </div>
+        <div class="projects-grid" id="projectsGrid">
+          <!-- Dynamically populated project blueprints -->
+        </div>
+      </section>
+
+      <!-- TAB 3: Personalized Roadmap -->
+      <section class="tab-content" id="roadmapTab">
+        <div class="roadmap-controls glass-card">
+          <div class="control-group">
+            <label for="roadmapRoleSelect"><i data-lucide="target"></i> Target Career Track:</label>
+            <select id="roadmapRoleSelect" class="form-select"></select>
+          </div>
+          <div class="control-group">
+            <label for="roadmapWeeks"><i data-lucide="calendar"></i> Timeline (Weeks):</label>
+            <select id="roadmapWeeks" class="form-select">
+              <option value="4">4 Weeks (Fast-Track)</option>
+              <option value="6" selected>6 Weeks (Standard)</option>
+              <option value="8">8 Weeks (Comprehensive)</option>
+              <option value="12">12 Weeks (In-Depth)</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label for="roadmapHours"><i data-lucide="clock"></i> Available Hours/Week:</label>
+            <select id="roadmapHours" class="form-select">
+              <option value="5">5 Hours/Week</option>
+              <option value="10" selected>10 Hours/Week</option>
+              <option value="15">15 Hours/Week</option>
+              <option value="20">20 Hours/Week</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" id="regenerateRoadmapBtn">
+            <i data-lucide="refresh-cw"></i> Generate Roadmap
+          </button>
+        </div>
+
+        <div class="roadmap-container" id="roadmapContainer">
+          <!-- Timeline generated dynamically -->
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>CareerForge.AI Engine &bull; Built with FastAPI, Google Gemini, ChromaDB & Vector Embeddings</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

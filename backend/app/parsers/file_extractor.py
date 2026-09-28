@@ -1,4 +1,5 @@
 import io
+import re
 from typing import Tuple
 import pdfplumber
 import pypdf
@@ -10,11 +11,35 @@ class DocumentExtractionError(Exception):
 
 class FileExtractor:
     """
-    Handles extracting plain text from PDF and DOCX documents with layout awareness.
+    Handles extracting clean plain text from PDF and DOCX documents with layout awareness
+    and artifact cleanup (such as CID font bullet codes like `(cid:127)`).
     """
 
     @staticmethod
-    def extract_text_from_pdf(file_bytes: bytes) -> str:
+    def _clean_extracted_text(text: str) -> str:
+        """
+        Cleans up raw extracted text:
+        - Replaces PDF CID bullet glyphs like `(cid:127)` or `(cid:143)` with clean bullets `• `
+        - Removes non-printable/control characters
+        - Normalizes whitespace while preserving section line breaks
+        """
+        if not text:
+            return ""
+
+        # Replace (cid:XXX) font encoding artifacts with a clean bullet point
+        cleaned = re.sub(r'\(cid:\d+\)', ' • ', text)
+        
+        # Replace non-breaking spaces and irregular unicode spaces
+        cleaned = cleaned.replace('\u00a0', ' ').replace('\u200b', '')
+
+        # Normalize line breaks and multiple consecutive spaces
+        cleaned = re.sub(r'[ \t]+', ' ', cleaned)
+        cleaned = re.sub(r'\n{3,}', '\n\n', cleaned)
+        
+        return cleaned.strip()
+
+    @classmethod
+    def extract_text_from_pdf(cls, file_bytes: bytes) -> str:
         """
         Extract text from PDF bytes.
         First tries pdfplumber (layout-aware, handles multi-column).
@@ -23,19 +48,18 @@ class FileExtractor:
         extracted_pages = []
         try:
             with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
-                for page_num, page in enumerate(pdf.pages):
-                    # Layout=True maintains column and spacing structure
+                for page in pdf.pages:
                     page_text = page.extract_text(layout=False, x_tolerance=2, y_tolerance=2)
                     if page_text:
                         extracted_pages.append(page_text.strip())
             
             combined_text = "\n\n".join(extracted_pages).strip()
             if combined_text:
-                return combined_text
-        except Exception as e:
-            # Fallback to pypdf
+                return cls._clean_extracted_text(combined_text)
+        except Exception:
             pass
 
+        # Fallback to pypdf
         try:
             reader = pypdf.PdfReader(io.BytesIO(file_bytes))
             pypdf_pages = []
@@ -46,13 +70,13 @@ class FileExtractor:
             
             combined = "\n\n".join(pypdf_pages).strip()
             if combined:
-                return combined
+                return cls._clean_extracted_text(combined)
             raise DocumentExtractionError("PDF appears to be empty or contains scanned images without selectable text.")
         except Exception as e:
             raise DocumentExtractionError(f"Failed to extract text from PDF: {str(e)}")
 
-    @staticmethod
-    def extract_text_from_docx(file_bytes: bytes) -> str:
+    @classmethod
+    def extract_text_from_docx(cls, file_bytes: bytes) -> str:
         """
         Extracts text from DOCX bytes including paragraphs and tables.
         """
@@ -74,7 +98,7 @@ class FileExtractor:
             combined_text = "\n".join(text_blocks).strip()
             if not combined_text:
                 raise DocumentExtractionError("DOCX document is empty.")
-            return combined_text
+            return cls._clean_extracted_text(combined_text)
         except Exception as e:
             raise DocumentExtractionError(f"Failed to extract text from DOCX: {str(e)}")
 
@@ -90,6 +114,7 @@ class FileExtractor:
         elif lower_name.endswith(".docx") or lower_name.endswith(".doc"):
             return cls.extract_text_from_docx(file_bytes), "docx"
         elif lower_name.endswith(".txt"):
-            return file_bytes.decode("utf-8", errors="ignore").strip(), "txt"
+            raw = file_bytes.decode("utf-8", errors="ignore")
+            return cls._clean_extracted_text(raw), "txt"
         else:
-            raise ValueError(f"Unsupported file format '{filename}'. Please upload a PDF or DOCX file.")
+            raise ValueError(f"Unsupported file format '{filename}'. Please upload a PDF, DOCX, or TXT file.")
